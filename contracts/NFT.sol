@@ -37,11 +37,11 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
         _baseURIPrefix = baseURIPrefix;
     }
 
-    function setTokenPrice(uint256 _price) public onlyOwner {
+    function adminTokenPrice(uint256 _price) public onlyOwner {
         tokenPrice = _price;
     }
 
-    function setFeaturePrice(uint256 _price) public onlyOwner {
+    function adminFeaturePrice(uint256 _price) public onlyOwner {
         featurePrice = _price;
     }
 
@@ -49,11 +49,11 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
         return _baseURIPrefix;
     }
 
-    function pause() public onlyOwner {
+    function adminPause() public onlyOwner {
         _pause();
     }
 
-    function unpause() public onlyOwner {
+    function adminUnpause() public onlyOwner {
         _unpause();
     }
 
