@@ -8,19 +8,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./StringArrayLib.sol";
-import "./stringUtils.sol";
+import "./strings.sol";
+
 contract OneAndOnly is ERC721, Pausable, Ownable {
     using Counters for Counters.Counter;
     using SafeMath for uint256;
     using StringArrayLib for StringArrayLib.Values;
+    using StringsUtils for string;
     string private _baseURIPrefix;
     uint private constant maxTokensPerTransaction = 100;
     uint256 private tokenPrice = 0.05 ether; //0.05 ETH
+    uint256 private featurePrice = 0.01 ether; //0.01 ETH
     mapping(string => address) public registry;
     mapping(string => uint256) public idByWords;
     mapping(uint256 => string) public wordById;
     mapping(address => StringArrayLib.Values) private wordsByOwner;
     Counters.Counter private _tokenIdCounter;
+
+    mapping(string => string) public validProps;
+    StringArrayLib.Values private listOfProps;
+    mapping(string => mapping(string => string)) public features;
 
     constructor() ERC721("OneAndOnly", "ONE") public {
         _tokenIdCounter.increment();
@@ -32,6 +39,10 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
 
     function setTokenPrice(uint256 _price) public onlyOwner {
         tokenPrice = _price;
+    }
+
+    function setFeaturePrice(uint256 _price) public onlyOwner {
+        featurePrice = _price;
     }
 
     function getBaseURIPrefix() internal view returns (string memory) {
@@ -55,7 +66,7 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
         return registry[word] == address(0x0);
     }
 
-    function getAllRegisteredWordsByOwner( address user )
+    function getAllRegisteredWordsByOwner(address user)
     public view returns (string[] memory)
     {
         return wordsByOwner[user].getAllValues();
@@ -71,11 +82,26 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
     }
 
     event OnBuy(address indexed user, string word, uint256 id);
-    function buy(string memory _word) whenNotPaused public payable {
-        require( StringUtils.indexOf(_word, "<") == -1 , "invalid char");
+
+    function buyOneWord(string memory _word) whenNotPaused public payable {
+        _buy(_word);
+    }
+
+    function buyMultipleWords(string memory _wordsByComa) whenNotPaused public payable {
+        string[] memory split = _wordsByComa.split(",");
+        require(tokenPrice.mul(split.length) <= msg.value, "Ether value sent is too low");
+        uint256 count = split.length;
+        for (uint256 i = 0; i < count; i++) {
+            _buy(split[i]);
+        }
+    }
+
+    function _buy(string memory _word) internal {
+        require(StringsUtils.length(_word) > 0, "no word");
+        require(StringsUtils.indexOf(_word, "<") == - 1, "invalid char");
         require(tokenPrice <= msg.value, "Ether value sent is too low");
-        string memory word = toLower ( _word );
-        require( registry[word] == address(0x0), "word already registered");
+        string memory word = _word.upper();
+        require(registry[word] == address(0x0), "word already registered");
         registry[word] = msg.sender;
         wordsByOwner[msg.sender].pushValue(word);
         uint256 id = _tokenIdCounter.current();
@@ -87,33 +113,50 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
     }
 
     event OnBurn(address indexed user, string word, uint256 id);
+
     function burn(string memory _word) whenNotPaused public payable {
         require(tokenPrice <= msg.value, "Ether value sent is too low");
-        string memory word = toLower ( _word );
-        require( registry[word] == msg.sender, "not owner");
+        string memory word = _word.upper();
+        require(registry[word] == msg.sender, "not owner");
         uint256 id = idByWords[word];
         idByWords[word] = 0;
         wordById[id] = "";
-        require( id > 0, "invalid token id");
+        require(id > 0, "invalid token id");
         registry[word] = address(0x0);
         wordsByOwner[msg.sender].removeValue(word);
         _burn(id);
         emit OnBuy(msg.sender, word, id);
     }
 
-    function toLower(string memory str) internal pure returns (string memory) {
-        bytes memory bStr = bytes(str);
-        bytes memory bLower = new bytes(bStr.length);
-        for (uint i = 0; i < bStr.length; i++) {
-            // Uppercase character...
-            if ((uint8(bStr[i]) >= 65) && (uint8(bStr[i]) <= 90)) {
-                // So we add 32 to make it lowercase
-                bLower[i] = bytes1(uint8(bStr[i]) + 32);
-            } else {
-                bLower[i] = bStr[i];
-            }
+    function adminSetValidProps(string memory name, string memory value) public onlyOwner {
+        validProps[name] = value;
+        listOfProps.pushValue(name);
+    }
+
+    function getListOfPropsNames() public view returns (string[] memory){
+        return listOfProps.getAllValues();
+    }
+
+    event OnFeatureSet(address indexed user, string word, string name, string value);
+
+    function setFeature(string memory _word, string memory _name, string memory _value) whenNotPaused public payable {
+        require(featurePrice <= msg.value, "Ether value sent is too low");
+        string memory word = _word.upper();
+        string memory name = _name.upper();
+        string memory value = _value.upper();
+        require(validProps[name].length() > 0, "invalide prop");
+        uint256 id = idByWords[word];
+        require(id > 0, "invalid token id");
+        require(registry[word] == msg.sender, "access denied");
+        features[word][name] = value;
+        emit OnFeatureSet(msg.sender, word, name, value);
+    }
+    function getFeatureOf(string memory word) public view returns(string[] memory names, string[] memory values){
+        names = getListOfPropsNames();
+        for (uint256 i = 0; i < names.length; i++) {
+            values[i] = features[word][ names[i] ] ;
         }
-        return string(bLower);
+        return (names, values);
     }
 
 }

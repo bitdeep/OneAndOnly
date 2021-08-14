@@ -6,7 +6,6 @@
   limitations under the License.
 */
 // SPDX-License-Identifier: MIT
-import "./stringUtils.sol";
 pragma solidity ^0.6.12;
 
 library StringArrayLib {
@@ -23,7 +22,7 @@ library StringArrayLib {
     }
     function removeValue(Values storage self, string memory element) internal returns (bool) {
         for (uint i = 0; i < self.size(); i++) {
-            if ( StringUtils.equal(self._items[i], element)) {
+            if ( compareTo(self._items[i], element)) {
                 self._items[i] = self._items[self.size() - 1];
                 self._items.pop();
                 return true;
@@ -31,12 +30,31 @@ library StringArrayLib {
         }
         return false;
     }
+    function compareTo(string memory _base, string memory _value)
+    internal
+    pure
+    returns (bool) {
+        bytes memory _baseBytes = bytes(_base);
+        bytes memory _valueBytes = bytes(_value);
+
+        if (_baseBytes.length != _valueBytes.length) {
+            return false;
+        }
+
+        for (uint i = 0; i < _baseBytes.length; i++) {
+            if (_baseBytes[i] != _valueBytes[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }
     function size(Values storage self) internal view returns (uint256) {
         return self._items.length;
     }
     function exists(Values storage self, string memory element) internal view returns (bool) {
         for (uint i = 0; i < self.size(); i++) {
-            if ( StringUtils.equal(self._items[i], element) ) {
+            if ( compareTo(self._items[i], element) ) {
                 return true;
             }
         }
