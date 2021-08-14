@@ -36,21 +36,27 @@ Hash of word id by tokenId.
 Use like `wordById('1')` to return word
 
 ## `validProps('backgroundColor')`
+
 Query properties values by propery key.
-Use like `validProps('backgroundColor')` to return #ffffff
+Use like `validProps('backgroundColor')` to return #ffffff.
+This returns the devault value for this property key.
 
 ## `getFeatureOf('word')`
 Map of features index by word, this is the features that owner set.
 Features will only be set according to validProps
 Call `getFeatureOf('word')` to get a list of 2 arrays:
-
 ```javascript
 ['backgroundColor','font']
 ['#ffffff','Arial']
 ```
+- Only return list of valid porpos keys, use adminSetValidProps to set.
+- Use getListOfPropsNames to get list of valid properties keys.
 
 ## `setFeature('word', 'backgroundColor', 'red')`
 Allow user to set a feature paying a small fee
+- User can only set property if admin call adminSetValidProps first adding the property key before.
+- Use getListOfPropsNames to get list of valid properties keys.
+- Use `getFeatureOf('word')` to get a list of properties already set.
 
 # Admin Operations
 
