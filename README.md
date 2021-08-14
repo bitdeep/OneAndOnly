@@ -5,7 +5,7 @@ Return the base url, like https://localhost/path
 ## `isThisWordAvailable('word')`
 Return true if the word is available to mint.
 
-## `getAllRegisteredWordsByOwner('0x0')`
+## `getAllRegisteredWordsByOwner('0x000000000000000000000000000000000000dead')`
 Return the list of all registered words by an wallet.
 
 ## `tokenURI('1')`
@@ -25,7 +25,7 @@ Burn the token by word.
 
 ## `registry('word')`
 Hash of owners by word.
-Use like `registry('word')` to return address ie 0x0
+Use like `registry('word')` to return address ie `0x000000000000000000000000000000000000dead`
 
 ## `idByWords('word')`
 Hash of token id by word.
