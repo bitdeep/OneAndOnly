@@ -57,7 +57,7 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
         _unpause();
     }
 
-    function withdraw() public onlyOwner {
+    function adminWithdraw() public onlyOwner {
         uint balance = address(this).balance;
         payable(msg.sender).transfer(balance);
     }
