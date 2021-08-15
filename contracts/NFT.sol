@@ -98,7 +98,7 @@ contract OneAndOnly is ERC721, Pausable, Ownable {
 
     function _buy(string memory _word) internal {
         require(StringsUtils.length(_word) > 0, "no word");
-        require(StringsUtils.indexOf(_word, "<") == - 1, "invalid char");
+        require(StringsUtils.indexOf(_word, "<") == - 1 && StringsUtils.indexOf(_word, " ") == - 1 , "invalid char");
         require(tokenPrice <= msg.value, "Ether value sent is too low");
         string memory word = _word.upper();
         require(registry[word] == address(0x0), "word already registered");
